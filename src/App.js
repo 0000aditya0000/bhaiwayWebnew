@@ -71,6 +71,7 @@ export default function App() {
   // Waitlist Form State
   const [waitlistName, setWaitlistName] = useState("");
   const [waitlistEmail, setWaitlistEmail] = useState("");
+  const [waitlistPhone, setWaitlistPhone] = useState("");
   const [waitlistRole, setWaitlistRole] = useState("both");
   const [waitlistCity, setWaitlistCity] = useState("Delhi NCR");
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -154,9 +155,15 @@ export default function App() {
   // Handle Waitlist Submission
   const handleJoinWaitlist = async (e) => {
     e.preventDefault();
-    if (!waitlistEmail || !waitlistName) {
+    const phoneDigits = waitlistPhone.replace(/\D/g, "");
+    if (!waitlistEmail || !waitlistName || !waitlistPhone) {
       setSubmitStatus("error");
-      setSubmitMessage("Please enter your name and a valid email address.");
+      setSubmitMessage("Please enter your name, email, and phone number.");
+      return;
+    }
+    if (phoneDigits.length < 10) {
+      setSubmitStatus("error");
+      setSubmitMessage("Please enter a valid 10-digit phone number.");
       return;
     }
 
@@ -168,6 +175,7 @@ export default function App() {
       await submitWaitlistToGoogleSheet({
         name: waitlistName,
         email: waitlistEmail,
+        phone: waitlistPhone,
         role: waitlistRole,
         city: waitlistCity,
       });
@@ -176,6 +184,7 @@ export default function App() {
       setSubmitMessage("You will get 50 Bhaiway Coins as rewards.");
       setWaitlistEmail("");
       setWaitlistName("");
+      setWaitlistPhone("");
     } catch (err) {
       const errorMsg = err.message || "Something went wrong. Please try again.";
       setSubmitStatus("error");
@@ -1359,6 +1368,8 @@ export default function App() {
               <input 
                 id="email"
                 type="email"
+                inputMode="email"
+                autoComplete="email"
                 placeholder="amit.sharma@company.com"
                 value={waitlistEmail}
                 onChange={(e) => setWaitlistEmail(e.target.value)}
@@ -1368,31 +1379,52 @@ export default function App() {
               />
             </div>
 
-            {/* Role selection row */}
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label htmlFor="role" className="text-xs font-bold text-slate-700 font-heading block mb-2">Your Commute Preference</label>
+            {/* Phone Input */}
+            <div>
+              <label htmlFor="phone" className="text-xs font-bold text-slate-700 font-heading block mb-2">Phone Number</label>
+              <input 
+                id="phone"
+                type="tel"
+                inputMode="tel"
+                autoComplete="tel"
+                placeholder="+91 98765 43210"
+                value={waitlistPhone}
+                onChange={(e) => setWaitlistPhone(e.target.value)}
+                data-testid="waitlist-phone-input"
+                className="w-full px-4 py-3 rounded-full border border-slate-200 focus:outline-none focus:ring-2 focus:ring-[#335EEA]/50 focus:border-[#335EEA] text-sm bg-white"
+                required
+              />
+            </div>
+
+            {/* Role + City — stacked on mobile for equal alignment */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:items-end">
+              <div className="min-w-0">
+                <label htmlFor="role" className="text-xs font-bold text-slate-700 font-heading block mb-2 min-h-[2.5rem] sm:min-h-0">
+                  Commute Preference
+                </label>
                 <select 
                   id="role"
                   value={waitlistRole}
                   onChange={(e) => setWaitlistRole(e.target.value)}
                   data-testid="waitlist-role-select"
-                  className="w-full px-4 py-3 rounded-full border border-slate-200 focus:outline-none focus:ring-2 focus:ring-[#335EEA]/50 focus:border-[#335EEA] text-sm bg-white"
+                  className="w-full h-12 px-4 rounded-full border border-slate-200 focus:outline-none focus:ring-2 focus:ring-[#335EEA]/50 focus:border-[#335EEA] text-sm bg-white appearance-none bg-[url('data:image/svg+xml;charset=utf-8,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 fill=%27none%27 viewBox=%270 0 24 24%27 stroke=%27%2394a3b8%27%3E%3Cpath stroke-linecap=%27round%27 stroke-linejoin=%27round%27 stroke-width=%272%27 d=%27M19 9l-7 7-7-7%27/%3E%3C/svg%3E')] bg-[length:1rem] bg-[right_0.9rem_center] bg-no-repeat pr-10"
                 >
-                  <option value="rider">Rider (Find Carpools)</option>
-                  <option value="driver">Driver (Offer Rides)</option>
-                  <option value="both">Both (Flexible)</option>
+                  <option value="rider">Rider</option>
+                  <option value="driver">Driver</option>
+                  <option value="both">Both</option>
                 </select>
               </div>
 
-              <div>
-                <label htmlFor="city" className="text-xs font-bold text-slate-700 font-heading block mb-2">Primary City</label>
+              <div className="min-w-0">
+                <label htmlFor="city" className="text-xs font-bold text-slate-700 font-heading block mb-2 min-h-[2.5rem] sm:min-h-0">
+                  Primary City
+                </label>
                 <select 
                   id="city"
                   value={waitlistCity}
                   onChange={(e) => setWaitlistCity(e.target.value)}
                   data-testid="waitlist-city-select"
-                  className="w-full px-4 py-3 rounded-full border border-slate-200 focus:outline-none focus:ring-2 focus:ring-[#335EEA]/50 focus:border-[#335EEA] text-sm bg-white"
+                  className="w-full h-12 px-4 rounded-full border border-slate-200 focus:outline-none focus:ring-2 focus:ring-[#335EEA]/50 focus:border-[#335EEA] text-sm bg-white appearance-none bg-[url('data:image/svg+xml;charset=utf-8,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 fill=%27none%27 viewBox=%270 0 24 24%27 stroke=%27%2394a3b8%27%3E%3Cpath stroke-linecap=%27round%27 stroke-linejoin=%27round%27 stroke-width=%272%27 d=%27M19 9l-7 7-7-7%27/%3E%3C/svg%3E')] bg-[length:1rem] bg-[right_0.9rem_center] bg-no-repeat pr-10"
                 >
                   <option value="Delhi NCR">Delhi NCR</option>
                   <option value="Bangalore">Bangalore</option>

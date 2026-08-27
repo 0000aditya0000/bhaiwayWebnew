@@ -12,15 +12,16 @@
  * 6. Deploy → New deployment → Web app
  *    - Execute as: Me
  *    - Who has access: Anyone
- * 7. Copy the Web app URL into frontend/.env:
+ * 7. Copy the Web app URL into .env as:
  *    REACT_APP_GOOGLE_SHEETS_WEBHOOK_URL=<your web app url>
+ * 8. After editing this script, Deploy → Manage deployments → Edit → New version
  */
 
 // Paste your Google Sheet ID here (required when using script.google.com)
 var SPREADSHEET_ID = "PASTE_YOUR_SHEET_ID_HERE";
 
 var TAB_NAME = "Waitlist";
-var HEADERS = ["Timestamp", "Name", "Email", "Role", "City", "Reward"];
+var HEADERS = ["Timestamp", "Name", "Email", "Phone", "Role", "City", "Reward"];
 
 function doPost(e) {
   try {
@@ -37,6 +38,8 @@ function doPost(e) {
     }
 
     var sheet = _getOrCreateSheet();
+    _ensureHeaders(sheet);
+
     var existing = _findEmailRow(sheet, email);
     if (existing > 0) {
       return _jsonResponse({
@@ -49,6 +52,7 @@ function doPost(e) {
       data.timestamp || new Date().toISOString(),
       data.name || "",
       email,
+      data.phone || "",
       data.role || "",
       data.city || "",
       data.reward || "50 Bhaiway Coins",
@@ -67,6 +71,7 @@ function doGet() {
 /** Run once from the Apps Script editor to verify sheet access and create the Waitlist tab. */
 function testSetup() {
   var sheet = _getOrCreateSheet();
+  _ensureHeaders(sheet);
   Logger.log("Connected to sheet: " + sheet.getParent().getName());
   Logger.log("Tab ready: " + sheet.getName());
 }
@@ -98,11 +103,31 @@ function _getOrCreateSheet() {
   if (!sheet) {
     sheet = ss.insertSheet(TAB_NAME);
   }
+  return sheet;
+}
+
+function _ensureHeaders(sheet) {
   if (sheet.getLastRow() === 0) {
     sheet.appendRow(HEADERS);
     sheet.getRange(1, 1, 1, HEADERS.length).setFontWeight("bold");
+    return;
   }
-  return sheet;
+
+  var lastCol = Math.max(sheet.getLastColumn(), 1);
+  var header = sheet.getRange(1, 1, 1, lastCol).getValues()[0];
+  var hasPhone = false;
+  for (var i = 0; i < header.length; i++) {
+    if (String(header[i] || "").toLowerCase() === "phone") {
+      hasPhone = true;
+      break;
+    }
+  }
+
+  if (!hasPhone) {
+    // Insert Phone after Email without deleting existing rows
+    sheet.insertColumnAfter(3);
+    sheet.getRange(1, 4).setValue("Phone").setFontWeight("bold");
+  }
 }
 
 function _findEmailRow(sheet, email) {
@@ -111,6 +136,7 @@ function _findEmailRow(sheet, email) {
     return -1;
   }
 
+  // Email is column C (3)
   var emails = sheet.getRange(2, 3, lastRow, 3).getValues();
   for (var i = 0; i < emails.length; i++) {
     if (String(emails[i][0] || "").trim().toLowerCase() === email) {
