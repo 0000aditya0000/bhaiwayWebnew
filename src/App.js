@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence, useInView } from "framer-motion";
 import axios from "axios";
+import { Analytics } from "@vercel/analytics/react";
 import { submitWaitlistToGoogleSheet } from "@/lib/waitlistSheets";
 import { 
   Shield, Sparkles, UserCheck, PhoneCall, ShieldAlert, Award, Clock, 
@@ -1800,6 +1801,7 @@ export default function App() {
         </div>
       </footer>
 
+      <Analytics />
     </div>
   );
 }
