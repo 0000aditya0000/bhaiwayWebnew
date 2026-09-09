@@ -3,6 +3,8 @@ import { motion, AnimatePresence, useInView } from "framer-motion";
 import axios from "axios";
 import { Analytics } from "@vercel/analytics/react";
 import { submitWaitlistToGoogleSheet } from "@/lib/waitlistSheets";
+import PrivacyPolicy from "@/components/PrivacyPolicy";
+import TermsOfService from "@/components/TermsOfService";
 import { 
   Shield, Sparkles, UserCheck, PhoneCall, ShieldAlert, Award, Clock, 
   ArrowRight, Star, ChevronDown, Send, MessageSquare, MapPin, 
@@ -68,6 +70,65 @@ export default function App() {
   const [isScrolled, setIsScrolled] = useState(false);
   const [activeSection, setActiveSection] = useState("home");
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+  // Routing / Page View State ("home" | "privacy" | "terms")
+  const [currentView, setCurrentView] = useState(() => {
+    if (typeof window !== "undefined") {
+      const path = window.location.pathname.toLowerCase();
+      const hash = window.location.hash.toLowerCase();
+      if (path === "/privacy" || path.startsWith("/privacy") || hash === "#privacy") {
+        return "privacy";
+      }
+      if (path === "/terms" || path.startsWith("/terms") || hash === "#terms" || path === "/terms-and-conditions") {
+        return "terms";
+      }
+    }
+    return "home";
+  });
+
+  useEffect(() => {
+    const handleUrlChange = () => {
+      const path = window.location.pathname.toLowerCase();
+      const hash = window.location.hash.toLowerCase();
+      if (path === "/privacy" || path.startsWith("/privacy") || hash === "#privacy") {
+        setCurrentView("privacy");
+        window.scrollTo(0, 0);
+      } else if (path === "/terms" || path.startsWith("/terms") || hash === "#terms" || path === "/terms-and-conditions") {
+        setCurrentView("terms");
+        window.scrollTo(0, 0);
+      } else {
+        setCurrentView("home");
+      }
+    };
+
+    window.addEventListener("popstate", handleUrlChange);
+    window.addEventListener("hashchange", handleUrlChange);
+    return () => {
+      window.removeEventListener("popstate", handleUrlChange);
+      window.removeEventListener("hashchange", handleUrlChange);
+    };
+  }, []);
+
+  const navigateToPrivacy = (e) => {
+    if (e && e.preventDefault) e.preventDefault();
+    window.history.pushState({}, "", "/privacy");
+    setCurrentView("privacy");
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
+  const navigateToTerms = (e) => {
+    if (e && e.preventDefault) e.preventDefault();
+    window.history.pushState({}, "", "/terms");
+    setCurrentView("terms");
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
+  const navigateToHome = (e) => {
+    if (e && e.preventDefault) e.preventDefault();
+    window.history.pushState({}, "", "/");
+    setCurrentView("home");
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
 
   // Waitlist Form State
   const [waitlistName, setWaitlistName] = useState("");
@@ -408,6 +469,24 @@ export default function App() {
 
   const [faqOpenIndex, setFaqOpenIndex] = useState(null);
 
+  if (currentView === "privacy") {
+    return (
+      <>
+        <PrivacyPolicy onBackToHome={navigateToHome} onNavigateToTerms={navigateToTerms} />
+        <Analytics />
+      </>
+    );
+  }
+
+  if (currentView === "terms") {
+    return (
+      <>
+        <TermsOfService onBackToHome={navigateToHome} onNavigateToPrivacy={navigateToPrivacy} />
+        <Analytics />
+      </>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-[#F8FAFC] text-[#111827] font-body relative overflow-hidden selection:bg-[#335EEA]/15 selection:text-[#335EEA]">
       
@@ -517,6 +596,26 @@ export default function App() {
               <button onClick={() => scrollToSection("safety")} className="text-left py-2 text-base font-medium text-slate-700 hover:text-[#335EEA] border-b border-slate-100">Safety</button>
               <button onClick={() => scrollToSection("how-it-works")} className="text-left py-2 text-base font-medium text-slate-700 hover:text-[#335EEA] border-b border-slate-100">How It Works</button>
               <button onClick={() => scrollToSection("faq")} className="text-left py-2 text-base font-medium text-slate-700 hover:text-[#335EEA] border-b border-slate-100">FAQ</button>
+              <a 
+                href="/privacy" 
+                onClick={(e) => {
+                  setMobileMenuOpen(false);
+                  navigateToPrivacy(e);
+                }} 
+                className="text-left py-2 text-base font-medium text-slate-700 hover:text-[#335EEA] border-b border-slate-100 cursor-pointer"
+              >
+                Privacy Policy
+              </a>
+              <a 
+                href="/terms" 
+                onClick={(e) => {
+                  setMobileMenuOpen(false);
+                  navigateToTerms(e);
+                }} 
+                className="text-left py-2 text-base font-medium text-slate-700 hover:text-[#335EEA] border-b border-slate-100 cursor-pointer"
+              >
+                Terms of Service
+              </a>
               <button onClick={() => scrollToSection("waitlist")} className="text-left py-2 text-base font-semibold text-[#335EEA]">Join Waitlist &rarr;</button>
             </motion.div>
           )}
@@ -1750,8 +1849,20 @@ export default function App() {
           {/* Legal */}
           <div className="md:col-span-3 flex flex-col gap-3 text-sm">
             <h4 className="font-heading font-bold text-slate-800 uppercase tracking-wider text-xs mb-1">Resources & Legal</h4>
-            <a href="#privacy" className="text-slate-500 hover:text-[#335EEA] transition-colors">Privacy Policy</a>
-            <a href="#terms" className="text-slate-500 hover:text-[#335EEA] transition-colors">Terms of Service</a>
+            <a 
+              href="/privacy" 
+              onClick={navigateToPrivacy} 
+              className="text-slate-500 hover:text-[#335EEA] transition-colors cursor-pointer"
+            >
+              Privacy Policy
+            </a>
+            <a 
+              href="/terms" 
+              onClick={navigateToTerms} 
+              className="text-slate-500 hover:text-[#335EEA] transition-colors cursor-pointer"
+            >
+              Terms of Service
+            </a>
             <button onClick={() => scrollToSection("faq")} className="text-left text-slate-500 hover:text-[#335EEA] transition-colors">FAQ</button>
           </div>
 
